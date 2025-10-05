@@ -1,0 +1,161 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    margin: 0;
+    flex-direction: column;
+}
+
+.container {
+    text-align: center;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* ... (other styles like h1, h2, instruction, mug-previews etc. remain the same) ... */
+
+/* Mug Container Setup */
+.mug {
+    position: relative;
+    width: 300px; 
+    height: 300px;
+    margin: 0 auto;
+}
+
+.base-mug-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; 
+}
+
+/* Design Overlay */
+.design-overlays {
+  position: absolute;
+    width: 192px;
+    height: 260px;
+    object-fit: fill;
+    opacity: 0;
+    transition: opacity 0.3s 
+ease-in-out;
+    z-index: 2;
+}
+
+.design-overlays-right {
+     position: absolute;
+    width: 198px;
+    height: 260px;
+    object-fit: fill;
+    opacity: 0;
+    transition: opacity 0.3s 
+ease-in-out;
+    z-index: 2;
+}
+
+/* Make the design visible only when the URL state is set */
+.design-overlays.visible {
+    opacity: 1;
+}
+
+.design-overlays-right.visible {
+    opacity: 1;
+}
+
+/* Specific positioning for left mug */
+.mug.left .design-overlays {
+ top: 22px;
+    left: 95px;
+}
+
+/* Specific positioning for right mug */
+.mug.right .design-overlays-right {
+       top: 25px;
+    left: 16px;
+}
+
+.mug-previewss {
+    display: flex;
+    /* width: 100%; */
+}
+
+/* Loading State */
+.loading {
+    color: #007bff;
+    font-weight: bold;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #e9f7fe;
+    border-radius: 5px;
+    border: 1px solid #b3e0ff;
+}
+
+/* Download Button */
+/* .download-btn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.download-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.download-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+} */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mug-previews {
+        flex-direction: column;
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .download-btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+
+.custom-file-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+
+
+
+
