@@ -1,33 +1,6 @@
-/* General Styles */
-body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f4f4f4;
-    margin: 0;
-    flex-direction: column;
-}
 
-.container {
-    text-align: center;
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-}
 
-/* ... (other styles like h1, h2, instruction, mug-previews etc. remain the same) ... */
 
-/* Mug Container Setup */
-.mug {
-    position: relative;
-    width: 300px; 
-    height: 300px;
-    margin: 0 auto;
-}
 
 .base-mug-img {
     position: absolute;

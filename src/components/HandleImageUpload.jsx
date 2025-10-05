@@ -1,12 +1,15 @@
-import React, { useState, useRef } from 'react';
-import './Fullimg.css';
+import React, { useState, useRef, useCallback } from "react";
+import "./Fullimg.css";
 
 function FullimgApp() {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [hasImage, setHasImage] = useState(false);
   const [imageScale, setImageScale] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [isDownloading, setIsDownloading] = useState(false);
   const fileInputRef = useRef(null);
+  const leftMugRef = useRef(null);
+  const rightMugRef = useRef(null);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -14,17 +17,14 @@ function FullimgApp() {
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl);
       setHasImage(true);
-      
-      // Auto-adjust image to fit mug surface
+
       const img = new Image();
-      img.onload = function() {
-        // Calculate scale to fit the mug surface
+      img.onload = function () {
         const mugSurfaceWidth = 115;
         const mugSurfaceHeight = 143;
-        const scale = Math.min(
-          mugSurfaceWidth / img.width,
-          mugSurfaceHeight / img.height
-        ) * 0.9;
+        const scale =
+          Math.min(mugSurfaceWidth / img.width, mugSurfaceHeight / img.height) *
+          0.9;
         setImageScale(scale);
         setImagePosition({ x: 0, y: 0 });
       };
@@ -38,45 +38,124 @@ function FullimgApp() {
     setImageScale(1);
     setImagePosition({ x: 0, y: 0 });
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
-  };
-
-  const handleDownload = () => {
-    alert('Mug preview download functionality would be implemented here!');
   };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle image adjustments
-  const adjustImage = (type) => {
-    switch(type) {
-      case 'zoom-in':
-        setImageScale(prev => prev * 1.1);
-        break;
-      case 'zoom-out':
-        setImageScale(prev => Math.max(0.5, prev * 0.9));
-        break;
-      case 'move-up':
-        setImagePosition(prev => ({ ...prev, y: prev.y - 10 }));
-        break;
-      case 'move-down':
-        setImagePosition(prev => ({ ...prev, y: prev.y + 10 }));
-        break;
-      case 'move-left':
-        setImagePosition(prev => ({ ...prev, x: prev.x - 10 }));
-        break;
-      case 'move-right':
-        setImagePosition(prev => ({ ...prev, x: prev.x + 10 }));
-        break;
-      case 'center':
-        setImagePosition({ x: 0, y: 0 });
-        setImageScale(1);
-        break;
-      default:
-        break;
+  // Download function with exact positioning
+  const downloadMugImage = useCallback(async (mugRef, fileName) => {
+    if (!mugRef.current || !uploadedImage) return;
+
+    const mugContainer = mugRef.current;
+    const baseImage = mugContainer.querySelector('.mug-image');
+    const designImage = mugContainer.querySelector('.overlay-image, .overlay-image-right');
+
+    if (!baseImage || !designImage) return;
+
+    setIsDownloading(true);
+    
+    try {
+        // Load both images
+        const loadImage = (src) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        };
+
+        const [baseImg, designImg] = await Promise.all([
+            loadImage(baseImage.src),
+            loadImage(designImage.src)
+        ]);
+
+        // Create canvas with exact dimensions
+        const canvas = document.createElement('canvas');
+        canvas.width = baseImg.width;
+        canvas.height = baseImg.height;
+        const ctx = canvas.getContext('2d');
+
+        // Draw base image
+        ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+
+        // Get the actual displayed position and dimensions from CSS
+        const mugRect = mugContainer.getBoundingClientRect();
+        const designRect = designImage.getBoundingClientRect();
+        
+        // Calculate relative position within the mug
+        const relativeLeft = (designRect.left - mugRect.left) / mugRect.width;
+        const relativeTop = (designRect.top - mugRect.top) / mugRect.height;
+        const relativeWidth = designRect.width / mugRect.width;
+        const relativeHeight = designRect.height / mugRect.height;
+
+        // Apply to canvas coordinates
+        const designX = relativeLeft * canvas.width;
+        const designY = relativeTop * canvas.height;
+        const designWidth = relativeWidth * canvas.width;
+        const designHeight = relativeHeight * canvas.height;
+
+        // Draw design overlay with exact positioning
+        ctx.drawImage(
+            designImg, 
+            designX, 
+            designY, 
+            designWidth, 
+            designHeight
+        );
+
+        // Download the image
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            setIsDownloading(false);
+        }, 'image/png', 1.0);
+
+    } catch (error) {
+        console.error('Error downloading image:', error);
+        setIsDownloading(false);
+    }
+  }, [uploadedImage]);
+
+  // Individual download functions
+  const downloadLeftImage = () => {
+    downloadMugImage(leftMugRef, 'left-side-mug');
+  };
+
+  const downloadRightImage = () => {
+    downloadMugImage(rightMugRef, 'right-side-mug');
+  };
+
+  // Download both sides
+  const handleDownload = async () => {
+    if (!hasImage) return;
+    
+    setIsDownloading(true);
+    try {
+      // Download left side first
+      await new Promise((resolve) => {
+        downloadMugImage(leftMugRef, 'left-side-mug');
+        setTimeout(resolve, 1000);
+      });
+      
+      // Download right side after a delay
+      setTimeout(() => {
+        downloadMugImage(rightMugRef, 'right-side-mug');
+      }, 1500);
+    } catch (error) {
+      console.error('Error downloading images:', error);
+      setIsDownloading(false);
     }
   };
 
@@ -86,77 +165,80 @@ function FullimgApp() {
         <div className="preview-section">
           <div className="mug-container">
             <div className="mug-preview">
-              <div className="mug-base">
-                <img 
-                  src="mug1.jpg" 
-                  alt="Mug" 
-                  className="mug-image" 
-                />
-                <div className="mug-surface">
-                  {hasImage ? (
-                    <div 
-                      className="image-container"
-                      style={{
-                        transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
-                      }}
-                    >
-                      <img 
-                        src={uploadedImage} 
-                        alt="User Upload" 
-                        className="overlay-image"
-                      />
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      <div className="upload-icon">📷</div>
-                      <span>Upload Your Photo</span>
-                    </div>
-                  )}
+              {/* Left Mug */}
+              <div className="mug-wrapper">
+                <div className="mug-base" ref={leftMugRef}>
+                  <img 
+                    src="mug.jpeg" 
+                    alt="Mug" 
+                    className="mug-image"
+                    crossOrigin="anonymous"
+                  />
+                  <div className="mug-surface">
+                    {hasImage ? (
+                      <div className="image-container">
+                        <img
+                          src={uploadedImage}
+                          alt="User Upload"
+                          className="overlay-image"
+                          crossOrigin="anonymous"
+                          
+                        />
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <div className="upload-icon">📷</div>
+                        <span>Upload Your Photo</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+                <button 
+                  className="download-side-btn left-download"
+                  onClick={downloadLeftImage}
+                  disabled={!hasImage || isDownloading}
+                >
+                  {isDownloading ? 'Downloading...' : 'Download Left'}
+                </button>
+              </div>
+              
+              {/* Right Mug */}
+              <div className="mug-wrapper">
+                <div className="mug-base" ref={rightMugRef}>
+                  <img 
+                    src="right.jpeg" 
+                    alt="Mug" 
+                    className="mug-image"
+                    crossOrigin="anonymous"
+                  />
+                  <div className="mug-surface-right">
+                    {hasImage ? (
+                      <div className="image-container-right">
+                        <img
+                          src={uploadedImage}
+                          alt="User Upload"
+                          className="overlay-image-right"
+                          crossOrigin="anonymous"
+                         
+                        />
+                      </div>
+                    ) : (
+                      <div className="empty-state-right">
+                        <div className="upload-icon">📷</div>
+                        <span>Upload Your Photo</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button 
+                  className="download-side-btn right-download"
+                  onClick={downloadRightImage}
+                  disabled={!hasImage || isDownloading}
+                >
+                  {isDownloading ? 'Downloading...' : 'Download Right'}
+                </button>
               </div>
             </div>
-
-            {hasImage && (
-              <div className="adjustment-controls">
-                <h4>Adjust Your Image</h4>
-                <div className="control-group">
-                  <div className="control-row">
-                    <button onClick={() => adjustImage('zoom-in')} className="control-btn">
-                      <span>+</span>
-                      Zoom In
-                    </button>
-                    <button onClick={() => adjustImage('zoom-out')} className="control-btn">
-                      <span>-</span>
-                      Zoom Out
-                    </button>
-                  </div>
-                  <div className="control-row">
-                    <button onClick={() => adjustImage('move-up')} className="control-btn">
-                      <span>↑</span>
-                      Move Up
-                    </button>
-                    <button onClick={() => adjustImage('move-down')} className="control-btn">
-                      <span>↓</span>
-                      Move Down
-                    </button>
-                  </div>
-                  <div className="control-row">
-                    <button onClick={() => adjustImage('move-left')} className="control-btn">
-                      <span>←</span>
-                      Move Left
-                    </button>
-                    <button onClick={() => adjustImage('move-right')} className="control-btn">
-                      <span>→</span>
-                      Move Right
-                    </button>
-                  </div>
-                  <button onClick={() => adjustImage('center')} className="control-btn reset">
-                    <span>⟲</span>
-                    Reset Position
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -165,10 +247,10 @@ function FullimgApp() {
             <h1>Custom Mug Designer</h1>
             <p className="subtitle">Create your personalized mug in seconds</p>
           </div>
-          
+
           <div className="upload-area" onClick={handleUploadClick}>
-            <input 
-              type="file" 
+            <input
+              type="file"
               ref={fileInputRef}
               onChange={handleImageUpload}
               accept="image/*"
@@ -181,31 +263,22 @@ function FullimgApp() {
             </div>
           </div>
 
-          <div className="instructions">
-            <h3>How to Use:</h3>
-            <ul>
-              <li>Click the upload area to select your image</li>
-              <li>Your image will automatically be positioned on the mug</li>
-              <li>The image is constrained to the printable area</li>
-              <li>For best results, use square or portrait-oriented images</li>
-              <li>Reset to try a different image</li>
-            </ul>
-          </div>
+         
 
           <div className="action-buttons">
-            <button 
-              className="reset-button" 
+            <button
+              className="reset-button"
               onClick={handleReset}
-              disabled={!hasImage}
+              disabled={!hasImage || isDownloading}
             >
               Reset Mug
             </button>
-            <button 
-              className="download-button" 
+            <button
+              className="download-button"
               onClick={handleDownload}
-              disabled={!hasImage}
+              disabled={!hasImage || isDownloading}
             >
-              Download Preview
+              {isDownloading ? 'Downloading...' : 'Download Both Sides'}
             </button>
           </div>
         </div>
