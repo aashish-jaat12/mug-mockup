@@ -2,8 +2,7 @@
 
 .apps-container {
   width: 100%;
-  max-width: 1200px;
-  margin-top: 100px;
+  margin-top: 30px;
   margin-left: auto;
   margin-right: auto;
   padding: 0 20px;
@@ -134,11 +133,11 @@
 .empty-state, .empty-state-right {
   color: #64748b;
   text-align: center;
-  padding: 20px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  
 }
 
 .empty-state .upload-icon, .empty-state-right .upload-icon {
@@ -283,7 +282,7 @@
 
 .upload-area:hover {
   border-color: #667eea;
-  background: #f0f4ff;
+  background: #a2b2e0;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
 }
@@ -647,9 +646,7 @@
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .control-section {
-    background: #1a202c;
-  }
+
   
   .control-section h1 {
     color: #e2e8f0;
@@ -660,8 +657,8 @@
   }
   
   .upload-area {
-    background: #2d3748;
-    border-color: #4a5568;
+  background: #a2b2e0;
+    border-color: #5a5a5c;
   }
   
   .upload-content h3 {

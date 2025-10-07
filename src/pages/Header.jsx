@@ -11,7 +11,6 @@ function Header() {
         {/* Logo */}
         <div className="logo">
           <Link to="/">
-            <img src="/logo.png" alt="Mug Designer Logo" className="logo-image" />
             <span className="logo-text">MugDesigner</span>
           </Link>
         </div>
